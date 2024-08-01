@@ -180,9 +180,6 @@ def bereken_gegevens(aantal_laadpalen, aantal_zonnepanelen, marge_laadpalen, mar
 
     return nieuwe_data, specificatie_nieuwe_maand
 
-Here is the improved PDF generation code that includes the specifications, fixes the table layout, and improves the appearance of the charts:
-
-```python
 class PDF(FPDF):
     def footer(self):
         self.set_y(-15)
