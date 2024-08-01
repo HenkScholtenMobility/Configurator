@@ -180,6 +180,9 @@ def bereken_gegevens(aantal_laadpalen, aantal_zonnepanelen, marge_laadpalen, mar
 
     return nieuwe_data, specificatie_nieuwe_maand
 
+Here is the improved PDF generation code that includes the specifications, fixes the table layout, and improves the appearance of the charts:
+
+```python
 class PDF(FPDF):
     def footer(self):
         self.set_y(-15)
@@ -230,6 +233,14 @@ class PDF(FPDF):
         for chapter_num, chapter_title in chapters.items():
             self.cell(0, 10, f"Hoofdstuk {chapter_num}: {chapter_title}", 0, 1, 'L')
         self.ln(10)
+
+    def add_specifications(self, specifications):
+        self.set_font("DejaVu", size=12)
+        for month, spec in specifications.items():
+            self.chapter_subtitle(f"Specificaties voor {month}")
+            for key, value in spec.items():
+                self.cell(0, 10, f"{key}: €{value:,.2f}", 0, 1, 'L')
+            self.ln(5)
 
 def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     pdf = PDF()
@@ -327,7 +338,9 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
         sns.barplot(x=["Omzet", "Marge", "Resultaat"], y=[maand_data['omzet'].values[0], maand_data['brutomarge'].values[0], maand_data['resultaat'].values[0]], palette="viridis", ax=ax)
         ax.set_ylim(0, 250000)
         ax.set_ylabel("Bedrag in €")
-        ax.set_title("Financiële Overzicht")
+        ax.set_title
+
+("Financiële Overzicht")
         fig.tight_layout()
         
         # Save figure to a temporary file
@@ -365,13 +378,17 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     row_height = pdf.font_size + 3
 
     for column in df.columns:
-        pdf.cell(col_width, row_height, column, border=1, align='C')
+        pdf.cell(col_width, row_height, column, border 1, align='C')
     pdf.ln(row_height)
     for i in range(len(df)):
         for column in df.columns:
             text = f"€{df[column].iloc[i]:,.2f}" if isinstance(df[column].iloc[i], (int, float)) else str(df[column].iloc[i])
             pdf.cell(col_width, row_height, text, border=1, align='C')
         pdf.ln(row_height)
+
+    # Add specifications
+    pdf.chapter_title(4, "Specificaties")
+    pdf.add_specifications(st.session_state.specificaties)
 
     return pdf.output(dest='S').encode('latin1')
 
