@@ -372,8 +372,6 @@ if st.button("Genereer Rapport"):
     st.download_button(label="Download PDF", data=pdf_content, file_name="financiele_configurator.pdf", mime="application/pdf")
 
 # Streamlit interface
-st.set_page_config(page_title="Bedrijfsconfigurator", layout="wide")
-
 st.title("Bedrijfsconfigurator")
 
 with st.sidebar:
