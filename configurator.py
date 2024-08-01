@@ -6,6 +6,7 @@ from datetime import datetime
 from io import BytesIO
 import matplotlib.pyplot as plt
 import seaborn as sns
+import tempfile
 
 # Set page configuration
 st.set_page_config(page_title="Bedrijfsconfigurator", layout="wide")
@@ -328,8 +329,12 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
         ax.set_ylabel("Bedrag in €")
         ax.set_title("Financiële Overzicht")
         fig.tight_layout()
-        img = plot_to_image(fig)
-        pdf.image(img, x=10, y=None, w=180)
+        
+        # Save figure to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".png") as tmpfile:
+            fig.savefig(tmpfile.name, bbox_inches='tight')
+            pdf.image(tmpfile.name, x=10, y=None, w=180)
+        
         plt.close(fig)
         pdf.ln(10)
 
@@ -342,8 +347,12 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
         ax.legend()
         fig.tight_layout()
         sns.despine()
-        img = plot_to_image(fig)
-        pdf.image(img, x=10, y=None, w=180)
+        
+        # Save figure to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".png") as tmpfile:
+            fig.savefig(tmpfile.name, bbox_inches='tight')
+            pdf.image(tmpfile.name, x=10, y=None, w=180)
+        
         plt.close(fig)
         pdf.add_page()
 
