@@ -7,6 +7,9 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Set page configuration
+st.set_page_config(page_title="Bedrijfsconfigurator", layout="wide")
+
 # Gegevens
 historische_data = {
     "maand": ["apr-24", "mei-24", "jun-24"],
