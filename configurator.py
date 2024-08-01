@@ -366,11 +366,6 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
 
     return pdf.output(dest='S').encode('latin1')
 
-# Rapport genereren en download button
-if st.button("Genereer Rapport"):
-    pdf_content = genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers)
-    st.download_button(label="Download PDF", data=pdf_content, file_name="financiele_configurator.pdf", mime="application/pdf")
-
 # Streamlit interface
 st.title("Bedrijfsconfigurator")
 
@@ -475,3 +470,8 @@ with st.container():
 
 st.markdown("### Detailgegevens")
 st.dataframe(df)
+
+# Rapport genereren en download button
+if st.button("Genereer Rapport"):
+    pdf_content = genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers)
+    st.download_button(label="Download PDF", data=pdf_content, file_name="rapport.pdf", mime="application/pdf")
