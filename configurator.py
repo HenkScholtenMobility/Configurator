@@ -231,6 +231,14 @@ class PDF(FPDF):
             self.cell(0, 10, f"Hoofdstuk {chapter_num}: {chapter_title}", 0, 1, 'L')
         self.ln(10)
 
+    def add_specifications(self, specifications):
+        self.set_font("DejaVu", size=12)
+        for month, spec in specifications.items():
+            self.chapter_subtitle(f"Specificaties voor {month}")
+            for key, value in spec.items():
+                self.cell(0, 10, f"{key}: €{value:,.2f}", 0, 1, 'L')
+            self.ln(5)
+
 def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     pdf = PDF()
     pdf.add_font("DejaVu", "", "DejaVSanus.ttf", uni=True)  # Adjust path to font file
@@ -244,7 +252,8 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     chapters = {
         1: "Inleiding",
         2: "Financiële Overzichten",
-        3: "Detailgegevens"
+        3: "Detailgegevens",
+        4: "Specificaties"
     }
     pdf.add_content_table(chapters)
     
@@ -372,6 +381,10 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
             text = f"€{df[column].iloc[i]:,.2f}" if isinstance(df[column].iloc[i], (int, float)) else str(df[column].iloc[i])
             pdf.cell(col_width, row_height, text, border=1, align='C')
         pdf.ln(row_height)
+
+    # Add specifications
+    pdf.chapter_title(4, "Specificaties")
+    pdf.add_specifications(st.session_state.specificaties)
 
     return pdf.output(dest='S').encode('latin1')
 
