@@ -1,184 +1,9 @@
-import streamlit as st
+import tempfile
 import pandas as pd
-import plotly.express as px
 from fpdf import FPDF
 from datetime import datetime
-from io import BytesIO
 import matplotlib.pyplot as plt
 import seaborn as sns
-import tempfile
-
-# Set page configuration
-st.set_page_config(page_title="Bedrijfsconfigurator", layout="wide")
-
-# Gegevens
-historische_data = {
-    "maand": ["apr-24", "mei-24", "jun-24"],
-    "laadpalen": [17, 32, 22],
-    "zonnepanelen": [1, 1, 2],
-    "omzet": [47815.08, 77623.70, 70814.06],
-    "kostprijs": [-31635.08, -53237.07, -48733.60],
-    "brutomarge": [16180.00, 24386.63, 22080.46],
-    "omzet_laadpalen": [39006.93, 72205.14, 53114.71],
-    "kostprijs_laadpalen": [-27304.85, -51170.81, -42461.63],
-    "brutomarge_laadpalen": [11702.08, 21034.33, 10653.08],
-    "omzet_zonnepanelen": [8808.15, 5418.56, 17699.35],
-    "kostprijs_zonnepanelen": [-4330.23, -2066.26, -6271.97],
-    "brutomarge_zonnepanelen": [4477.92, 3352.30, 11427.38],
-    "personeelskosten": [-16315.00, -16315.00, -16315.00],
-    "it_kosten": [-311.29, -284.03, -391.83],
-    "solar_kosten": [-704.50, -704.50, -704.50],
-    "contributie_kosten": [-154.74, -154.74, -154.74],
-    "afschrijving_kosten": [-3631.45, -3449.16, -3348.98],
-    "autokosten": [-500, -500, -500],
-    "resultaat": [-4936.98, 3479.20, 1165.41]
-}
-
-specificaties = {
-    "apr-24": {
-        "Personeelskosten": -16315.00,
-        "Loonjournaalpost": -16315.00,
-        "IT Kosten": -311.29,
-        "Acknowledge cloud dienst": -56.25,
-        "ACK CSP 14-02-24": -51.3,
-        "ACK SLA 37,60 PER WERKPLEK": -112.8,
-        "Ack Back Up storage": -44.79,
-        "BUBBLE": -13.52,
-        "SLA Licenties 2024-03": -23.44,
-        "kpn": -9.19,
-        "Contributies/ Lidmaatschappen": -859.24,
-        "2Solar software licentie": -704.5,
-        "Contributie installatiebedrijf": -154.74,
-        "Afschrijvingen": -3631.45,
-        "5231 afschrijving service auto": -2000.00,
-        "Afschrijving combo": -881.45,
-        "1 demo voor Bink & Ian": -750,
-    },
-    "mei-24": {
-        "Personeelskosten": -16315.00,
-        "Loonjournaalpost": -16315.00,
-        "IT Kosten": -284.03,
-        "ACK CSP 14-02-24": -51.3,
-        "ACK SLA 37,60 PER WERKPLEK": -112.8,
-        "Ack Back Up storage": -44.79,
-        "BUBBLE": -13.52,
-        "SLA licenties 2024": -46.88,
-        "Yomani SDLE pin Worldline": -14.74,
-        "Contributies/ Lidmaatschappen": -859.24,
-        "2Solar software licentie": -704.5,
-        "Contributie installatiebedrijf": -154.74,
-        "Afschrijvingen": -3449.16,
-        "5231 afschrijving service auto": -2000.00,
-        "Afschrijving combo": -699.16,
-        "1 demo voor Bink & Ian": -750,
-    },
-    "jun-24": {
-        "Personeelskosten": -16315.00,
-        "Loonjournaalpost": -16315.00,
-        "IT Kosten": -391.83,
-        "ACK CSP 14-02-24": -51.3,
-        "ACK SLA 37,60 PER WERKPLEK": -112.8,
-        "Ack Back Up storage": -44.79,
-        "BUBBLE": -13.52,
-        "SLA licenties 2024": -46.88,
-        "Coolblue Samsung ViewFinity": -47.92,
-        "Acknowledge adobe lightroom": -74.63,
-        "Contributies/ Lidmaatschappen": -859.24,
-        "2Solar software licentie": -704.5,
-        "Contributie installatiebedrijf": -154.74,
-        "Afschrijvingen": -3348.98,
-        "5231 afschrijving service auto": -2000.00,
-        "Afschrijving combo": -598.98,
-        "1 demo voor Bink & Ian": -750,
-    }
-}
-
-# Zet de oorspronkelijke data in een DataFrame
-df = pd.DataFrame(historische_data)
-
-# Laad opgeslagen gegevens als die er zijn
-if "data" not in st.session_state:
-    st.session_state.data = df
-else:
-    df = st.session_state.data
-
-if "specificaties" not in st.session_state:
-    st.session_state.specificaties = specificaties
-else:
-    specificaties = st.session_state.specificaties
-
-def bereken_afschrijving(kosten, percentage):
-    return kosten * (1 - percentage / 100)
-
-# Functie om de gegevens te berekenen op basis van de invoer
-def bereken_gegevens(aantal_laadpalen, aantal_zonnepanelen, marge_laadpalen, marge_zonnepanelen, aantal_installeurs, aantal_verkopers, fulltime_verkopers, marketing_budget, maand):
-    # Omzet en marge berekeningen
-    omzet_laadpalen = aantal_laadpalen * (sum(df["omzet_laadpalen"] / df["laadpalen"]) / len(df))
-    marge_laadpalen = aantal_laadpalen * (sum(df["brutomarge_laadpalen"] / df["laadpalen"]) / len(df)) * (marge_laadpalen / 100)
-    omzet_zonnepanelen = aantal_zonnepanelen * (sum(df["omzet_zonnepanelen"] / df["zonnepanelen"]) / len(df))
-    marge_zonnepanelen = aantal_zonnepanelen * (sum(df["brutomarge_zonnepanelen"] / df["zonnepanelen"]) / len(df)) * (marge_zonnepanelen / 100)
-
-    totale_omzet = omzet_laadpalen + omzet_zonnepanelen
-    totale_marge = marge_laadpalen + marge_zonnepanelen
-
-    # Personeelskosten
-    fulltime_installeurs_kosten = aantal_installeurs * 4000  # Fulltime installateurs à €4000 p.m.
-    parttime_verkopers_kosten = aantal_verkopers * 20 / 40 * 3000  # Parttime verkopers (20 uur p.p) à €3000 p.m.
-    fulltime_verkoper_kosten = fulltime_verkopers * 3000  # Fulltime verkopers à €3000 p.m.
-    parttime_registratie_kosten = 8 / 40 * 2500  # 1x parttime registratie (8 uur p.w.) à €2500 p.m.
-    personeelskosten = fulltime_installeurs_kosten + parttime_verkopers_kosten + fulltime_verkoper_kosten + parttime_registratie_kosten
-
-    # Vaste kosten
-    it_kosten = -sum(df["it_kosten"]) / len(df)
-    solar_kosten = -sum(df["solar_kosten"]) / len(df)
-    contributie_kosten = -sum(df["contributie_kosten"]) / len(df)
-    autokosten = -200  # Verander hier naar de juiste autokosten
-    afschrijving_service_auto = bereken_afschrijving(-2000, 5)  # Afschrijving van 5% per maand
-    afschrijving_combo = bereken_afschrijving(-600, 5)  # Afschrijving van 5% per maand
-
-    afschrijving_kosten = afschrijving_service_auto + afschrijving_combo
-
-    vaste_kosten = it_kosten + solar_kosten + contributie_kosten + autokosten + afschrijving_kosten
-    totale_kosten = personeelskosten + vaste_kosten + marketing_budget
-
-    resultaat = totale_marge - totale_kosten
-
-    totale_personen = aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1  # Totaal personeel incl. registratie medewerker
-    omzet_per_persoon = totale_omzet / totale_personen
-    marge_per_persoon = totale_marge / totale_personen
-
-    nieuwe_data = {
-        "maand": maand,
-        "laadpalen": aantal_laadpalen,
-        "zonnepanelen": aantal_zonnepanelen,
-        "omzet": totale_omzet,
-        "kostprijs": -(omzet_laadpalen + omzet_zonnepanelen - totale_marge),
-        "brutomarge": totale_marge,
-        "omzet_laadpalen": omzet_laadpalen,
-        "kostprijs_laadpalen": -((omzet_laadpalen * 100 / marge_laadpalen) - omzet_laadpalen),
-        "brutomarge_laadpalen": marge_laadpalen,
-        "omzet_zonnepanelen": omzet_zonnepanelen,
-        "kostprijs_zonnepanelen": -((omzet_zonnepanelen * 100 / marge_zonnepanelen) - omzet_zonnepanelen),
-        "brutomarge_zonnepanelen": marge_zonnepanelen,
-        "personeelskosten": personeelskosten,
-        "it_kosten": it_kosten,
-        "solar_kosten": solar_kosten,
-        "contributie_kosten": contributie_kosten,
-        "autokosten": autokosten,
-        "afschrijving_kosten": afschrijving_kosten,
-        "resultaat": resultaat
-    }
-
-    specificatie_nieuwe_maand = {
-        "Personeelskosten": personeelskosten,
-        "IT Kosten": it_kosten,
-        "Solar kosten": solar_kosten,
-        "Contributie installatiebedrijf": contributie_kosten,
-        "Autokosten": autokosten,
-        "Afschrijvingen": afschrijving_kosten,
-    }
-
-    return nieuwe_data, specificatie_nieuwe_maand
 
 class PDF(FPDF):
     def footer(self):
@@ -252,7 +77,8 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     chapters = {
         1: "Inleiding",
         2: "Financiële Overzichten",
-        3: "Detailgegevens"
+        3: "Detailgegevens",
+        4: "Specificaties"
     }
     pdf.add_content_table(chapters)
     
@@ -335,9 +161,7 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
         sns.barplot(x=["Omzet", "Marge", "Resultaat"], y=[maand_data['omzet'].values[0], maand_data['brutomarge'].values[0], maand_data['resultaat'].values[0]], palette="viridis", ax=ax)
         ax.set_ylim(0, 250000)
         ax.set_ylabel("Bedrag in €")
-        ax.set_title
-
-("Financiële Overzicht")
+        ax.set_title("Financiële Overzicht")
         fig.tight_layout()
         
         # Save figure to a temporary file
@@ -375,7 +199,7 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     row_height = pdf.font_size + 3
 
     for column in df.columns:
-        pdf.cell(col_width, row_height, column, border 1, align='C')
+        pdf.cell(col_width, row_height, column, border=1, align='C')
     pdf.ln(row_height)
     for i in range(len(df)):
         for column in df.columns:
@@ -388,113 +212,3 @@ def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     pdf.add_specifications(st.session_state.specificaties)
 
     return pdf.output(dest='S').encode('latin1')
-
-# Streamlit interface
-st.title("Bedrijfsconfigurator")
-
-with st.sidebar:
-    st.header("Invoerparameters")
-    aantal_laadpalen = st.slider("Aantal verkochte laadpalen", 0, 100, 22)
-    aantal_zonnepanelen = st.slider("Aantal verkochte zonnepanelen", 0, 50, 2)
-    marge_laadpalen = st.slider("Marge Laadpalen (%)", 0, 100, 32)
-    marge_zonnepanelen = st.slider("Marge Zonnepanelen (%)", 0, 100, 32)
-    aantal_installeurs = st.slider("Aantal fulltime installateurs", 1, 10, 2)
-    aantal_verkopers = st.slider("Aantal parttime verkopers", 0, 10, 2)
-    fulltime_verkopers = st.slider("Aantal fulltime verkopers", 0, 10, 0)
-    marketing_budget = st.slider("Marketing Budget (€)", 0, 50000, 5000)
-    maand = st.text_input("Maand (bijv. jul-24)", "jul-24")
-
-    if st.button("Invoeren"):
-        # Bereken de gegevens voor nieuwe maand
-        nieuwe_data, specificatie_nieuwe_maand = bereken_gegevens(aantal_laadpalen, aantal_zonnepanelen, marge_laadpalen, marge_zonnepanelen, aantal_installeurs, aantal_verkopers, fulltime_verkopers, marketing_budget, maand)
-        df_nieuwe_data = pd.DataFrame([nieuwe_data])
-        df = pd.concat([df, df_nieuwe_data], ignore_index=True)
-        
-        # Sla de bijgewerkte gegevens op in de sessie
-        st.session_state.data = df
-
-        # Voeg nieuwe maand toe aan specificaties
-        if maand not in st.session_state.specificaties:
-            st.session_state.specificaties[maand] = specificatie_nieuwe_maand
-            specificaties = st.session_state.specificaties
-
-st.markdown("### Resultaten")
-
-# Dropdown menu voor maand specificaties
-selected_month = st.selectbox("Selecteer een maand voor specificaties", ["Selecteer een maand"] + list(st.session_state.specificaties.keys()))
-
-if selected_month and selected_month != "Selecteer een maand":
-    with st.expander(f"Specificaties voor {selected_month}"):
-        specificatie_data = st.session_state.specificaties[selected_month]
-        for key, value in specificatie_data.items():
-            st.write(f"{key}: €{value:,.2f}")
-
-# Organiseer de resultaten in een kolomstructuur
-with st.container():
-    col1, col2, col3, col4 = st.columns((2, 1, 1, 1))
-
-    with col1:
-        st.metric("Totale Omzet", f"€{df['omzet'].iloc[-1]:,.2f}")
-        st.metric("Omzet per Persoon", f"€{df['omzet'].iloc[-1] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1):,.2f}")
-
-    with col2:
-        st.metric("Totale Marge", f"€{df['brutomarge'].iloc[-1]:,.2f}")
-        st.metric("Marge per Persoon", f"€{df['brutomarge'].iloc[-1] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1):,.2f}")
-
-    with col3:
-        st.metric("Resultaat", f"€{df['resultaat'].iloc[-1]:,.2f}")
-        st.metric("Totale Personeelskosten", f"€{df['personeelskosten'].iloc[-1]:,.2f}")
-
-    with col4:
-        st.metric("IT kosten", f"€{-df['it_kosten'].iloc[-1]:,.2f}")
-        st.metric("Solar kosten", f"€{-df['solar_kosten'].iloc[-1]:,.2f}")
-        st.metric("Contributie installatiebedrijf", f"€{-df['contributie_kosten'].iloc[-1]:,.2f}")
-        st.metric("Autokosten", f"€{-df['autokosten'].iloc[-1]:,.2f}")
-        st.metric("Afschrijving vervoersmiddelen", f"€{-df['afschrijving_kosten'].iloc[-1]:,.2f}")
-
-# Visualisaties
-st.markdown("### Visualisaties")
-
-def plot_to_image(figure):
-    img = BytesIO()
-    figure.savefig(img, format='png', bbox_inches='tight')
-    img.seek(0)
-    return img
-
-with st.container():
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        fig1 = px.bar(x=["Omzet", "Marge", "Resultaat"], y=[df['omzet'].iloc[-1], df['brutomarge'].iloc[-1], df['resultaat'].iloc[-1]],
-                      labels={'x': 'Categorie', 'y': 'Bedrag in €'}, title="Financiële Overzicht")
-        st.plotly_chart(fig1, use_container_width=True)
-
-    with col2:
-        fig2 = px.bar(x=["Omzet per Persoon", "Marge per Persoon"], y=[df['omzet'].iloc[-1] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1), df['brutomarge'].iloc[-1] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1)],
-                      labels={'x': 'Categorie', 'y': 'Bedrag in €'}, title="Omzet en Marge per Persoon")
-        st.plotly_chart(fig2, use_container_width=True)
-
-    with col3:
-        fig3 = px.bar(x=["Omzet Laadpalen", "Marge Laadpalen"], y=[df['omzet_laadpalen'].iloc[-1], df['brutomarge_laadpalen'].iloc[-1]],
-                      labels={'x': 'Categorie', 'y': 'Bedrag in €'}, title="Laadpalen Omzet en Marge")
-        st.plotly_chart(fig3, use_container_width=True)
-
-    with col4:
-        fig4 = px.bar(x=["Omzet Zonnepanelen", "Marge Zonnepanelen"], y=[df['omzet_zonnepanelen'].iloc[-1], df['brutomarge_zonnepanelen'].iloc[-1]],
-                      labels={'x': 'Categorie', 'y': 'Bedrag in €'}, title="Zonnepanelen Omzet en Marge")
-        st.plotly_chart(fig4, use_container_width=True)
-
-st.markdown("### Trends en Verhoudingen")
-
-with st.container():
-    fig5 = px.line(df, x="maand", y=["omzet", "kostprijs", "resultaat"], labels={'value': 'Bedrag in €', 'variable': 'Categorie'},
-                   title="Omzet, Kosten en Winst")
-    st.plotly_chart(fig5, use_container_width=True)
-
-st.markdown("### Detailgegevens")
-st.dataframe(df)
-
-# Rapport genereren en download button
-if st.button("Genereer Rapport"):
-    pdf_content = genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers)
-    st.download_button(label="Download PDF", data=pdf_content, file_name="rapport.pdf", mime="application/pdf")
