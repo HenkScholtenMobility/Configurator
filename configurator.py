@@ -230,9 +230,9 @@ class PDF(FPDF):
             self.cell(0, 10, f"Hoofdstuk {chapter_num}: {chapter_title}", 0, 1, 'L')
         self.ln(10)
 
-def genereer_rapport():
+def genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers):
     pdf = PDF()
-    pdf.add_font("DejaVu", "", "DejaVSanus.ttf", uni=True)
+    pdf.add_font("DejaVu", "", "DejaVSanus.ttf", uni=True)  # Adjust path to font file
     pdf.set_font("DejaVu", size=12)
 
     # Titelpagina
@@ -284,8 +284,8 @@ def genereer_rapport():
                 f"€{maand_data['brutomarge'].values[0]:,.2f}",
                 f"€{maand_data['kostprijs'].values[0] * -1:,.2f}",
                 f"€{maand_data['resultaat'].values[0]:,.2f}",
-                f"€{maand_data['omzet'].values[0] / (aantal_installeurs + aantal_verkopers + 1):,.2f}",
-                f"€{maand_data['brutomarge'].values[0] / (aantal_installeurs + aantal_verkopers + 1):,.2f}"
+                f"€{maand_data['omzet'].values[0] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1):,.2f}",
+                f"€{maand_data['brutomarge'].values[0] / (aantal_installeurs + aantal_verkopers + fulltime_verkopers + 1):,.2f}"
             ]
         })
         pdf.add_table(financial_overview)
@@ -368,7 +368,7 @@ def genereer_rapport():
 
 # Rapport genereren en download button
 if st.button("Genereer Rapport"):
-    pdf_content = genereer_rapport()
+    pdf_content = genereer_rapport(aantal_installeurs, aantal_verkopers, fulltime_verkopers)
     st.download_button(label="Download PDF", data=pdf_content, file_name="financiele_configurator.pdf", mime="application/pdf")
 
 # Streamlit interface
