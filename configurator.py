@@ -232,7 +232,7 @@ class PDF(FPDF):
 
 def genereer_rapport():
     pdf = PDF()
-    pdf.add_font("DejaVu", "", "DejaVSanus.ttf", un=Truie)  # Adjust path to font file
+    pdf.add_font("DejaVu", "", "DejaVSanus.ttf", uni=True)
     pdf.set_font("DejaVu", size=12)
 
     # Titelpagina
